@@ -300,33 +300,78 @@
     $('#empty-note').hidden = !isExample;
   }
 
-  /* Google reviews, copied word for word into Site settings. The section stays hidden until there is one. */
+  /* Google reviews, copied word for word into Site settings. The section stays hidden until there is one.
+     Each card links to the Google profile so visitors can check the review themselves. */
+  const AV_COLORS = ['#5C6BC0','#00897B','#8D6E63','#C2185B','#6D4C41','#3949AB','#00796B','#7B1FA2','#AD1457','#455A64'];
+  const rvStars = n => { const k = Math.max(0, Math.min(5, Math.round(+n || 5))); return '★'.repeat(k) + '☆'.repeat(5 - k); };
+  const rvRating = r => Math.min(5, Math.max(1, Math.round(+r.rating || 5)));
+  function rvCard(r, fallbackUrl){
+    const url = /^https?:\/\//.test((r.link || '').trim()) ? r.link.trim() : fallbackUrl;
+    const card = document.createElement(url ? 'a' : 'div'); card.className = 'rv';
+    if (url){ card.href = url; card.target = '_blank'; card.rel = 'noopener'; card.setAttribute('aria-label', 'Review by ' + r.name.trim() + ' on Google'); }
+    const top = document.createElement('div'); top.className = 'rv-top';
+    const av = document.createElement('span'); av.className = 'rv-av';
+    if (src(r.avatar)){ const im = new Image(); im.src = src(r.avatar); im.alt = ''; im.loading = 'lazy'; av.appendChild(im); }
+    else {
+      const nm = r.name.trim(); let hsh = 0; for (const ch of nm) hsh = (hsh * 31 + ch.codePointAt(0)) >>> 0;
+      av.style.background = AV_COLORS[hsh % AV_COLORS.length]; av.textContent = nm.charAt(0).toUpperCase();
+    }
+    const who = document.createElement('span'); who.className = 'rv-who';
+    const n = document.createElement('span'); n.className = 'rv-name'; n.textContent = r.name.trim();
+    const meta = document.createElement('span'); meta.className = 'rv-meta';
+    const st = document.createElement('span'); st.className = 'rv-stars'; st.textContent = rvStars(rvRating(r)); st.setAttribute('aria-label', rvRating(r) + ' out of 5 stars');
+    meta.appendChild(st);
+    if ((r.date || '').trim()){ const d = document.createElement('span'); d.className = 'rv-date'; d.textContent = r.date.trim(); meta.appendChild(d); }
+    who.append(n, meta); top.append(av, who);
+    const q = document.createElement('p'); q.className = 'rv-text'; q.textContent = r.text.trim();
+    card.append(top, q);
+    const photos = (Array.isArray(r.photos) ? r.photos : (r.photos ? [r.photos] : [])).map(src).filter(Boolean);
+    if (photos.length){
+      const ph = document.createElement('div'); ph.className = 'rv-photos';
+      photos.slice(0, 3).forEach((p, i) => {
+        const f = document.createElement('span'); f.className = 'rv-ph';
+        const im = new Image(); im.src = p; im.alt = 'Photo from ' + r.name.trim() + "'s review"; im.loading = 'lazy'; f.appendChild(im);
+        if (i === 2 && photos.length > 3){ const more = document.createElement('span'); more.className = 'rv-more'; more.textContent = '+' + (photos.length - 3); f.appendChild(more); }
+        ph.appendChild(f);
+      });
+      card.appendChild(ph);
+    }
+    const foot = document.createElement('span'); foot.className = 'rv-foot';
+    foot.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 9.9 5.4l4.3.6-3.1 3 .7 4.3L8 11.3l-3.8 2 .7-4.3-3.1-3 4.3-.6z" fill="currentColor"/></svg>';
+    const ft = document.createElement('span'); ft.textContent = url ? 'Posted on Google ↗' : 'Posted on Google'; foot.appendChild(ft);
+    card.appendChild(foot);
+    return card;
+  }
   function reviews(s){
     const sec = $('#reviews'); if (!sec) return;
     const list = (s.reviews || []).filter(r => r && (r.text || '').trim() && (r.name || '').trim());
     sec.hidden = !list.length; if (!list.length) return;
-    const stars = n => { const k = Math.max(0, Math.min(5, Math.round(+n || 5))); return '★★★★★'.slice(0, k) + '☆☆☆☆☆'.slice(0, 5 - k); };
+    const url = /^https?:\/\//.test((s.google_reviews_url || '').trim()) ? s.google_reviews_url.trim() : '';
     const grid = $('#rv-grid'); grid.innerHTML = '';
-    list.forEach(r => {
-      const f = document.createElement('figure'); f.className = 'rv';
-      const st = document.createElement('p'); st.className = 'rv-stars'; st.textContent = stars(r.rating);
-      st.setAttribute('aria-label', (Math.round(+r.rating || 5)) + ' out of 5 stars');
-      const q = document.createElement('blockquote'); q.textContent = r.text.trim();
-      const c = document.createElement('figcaption');
-      const n = document.createElement('span'); n.className = 'rv-name'; n.textContent = r.name.trim();
-      c.appendChild(n);
-      if ((r.date || '').trim()){ const d = document.createElement('span'); d.className = 'rv-date'; d.textContent = r.date.trim(); c.appendChild(d); }
-      f.append(st, q, c); grid.appendChild(f);
-    });
-    const avg = list.reduce((t, r) => t + (Math.min(5, Math.max(1, +r.rating || 5))), 0) / list.length;
-    $('#rv-score').innerHTML = '';
+    list.forEach(r => grid.appendChild(rvCard(r, url)));
+    const avg = list.reduce((t, r) => t + rvRating(r), 0) / list.length;
+    const sc = $('#rv-score'); sc.innerHTML = '';
+    const lab = document.createElement('span'); lab.className = 'rv-label'; lab.textContent = 'Google rating';
+    const row = document.createElement('span'); row.className = 'rv-row';
     const big = document.createElement('span'); big.className = 'rv-avg'; big.textContent = avg.toFixed(1);
-    const side = document.createElement('span'); side.className = 'rv-side';
-    const st = document.createElement('span'); st.className = 'rv-stars'; st.textContent = stars(avg);
-    const cnt = document.createElement('span'); cnt.className = 'eyebrow'; cnt.textContent = list.length + (list.length === 1 ? ' review' : ' reviews') + ' on Google';
-    side.append(st, cnt); $('#rv-score').append(big, side);
-    const url = (s.google_reviews_url || '').trim(), link = $('#rv-link');
-    if (/^https?:\/\//.test(url)){ link.href = url; link.hidden = false; } else link.hidden = true;
+    const st = document.createElement('span'); st.className = 'rv-stars lg'; st.textContent = rvStars(avg);
+    const cnt = document.createElement('span'); cnt.className = 'rv-count'; cnt.textContent = list.length + (list.length === 1 ? ' review' : ' reviews');
+    row.append(big, st, cnt); sc.append(lab, row);
+    const link = $('#rv-link'); if (url){ link.href = url; link.hidden = false; } else link.hidden = true;
+    const wurl = (s.google_write_review_url || '').trim(), w = $('#rv-write');
+    if (/^https?:\/\//.test(wurl)){ w.href = wurl; w.hidden = false; } else w.hidden = true;
+  }
+
+  /* Small floating WhatsApp button on every page (bottom right). */
+  function floatingWhatsApp(){
+    if (!CONTACT.wa || $('.wa-float')) return;
+    const slugTitle = document.body.dataset.page === 'artwork' ? ($('#a-title') && $('#a-title').textContent) : '';
+    const msg = slugTitle ? 'Hello Yuvraj, I am interested in "' + slugTitle + '".' : 'Hello Yuvraj, I would like to commission an artwork.';
+    const a = document.createElement('a'); a.className = 'wa-float';
+    a.href = 'https://wa.me/' + CONTACT.wa + '?text=' + encodeURIComponent(msg);
+    a.target = '_blank'; a.rel = 'noopener'; a.setAttribute('aria-label', 'Chat on WhatsApp');
+    a.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2c-4.9 0-8.8 3.6-8.8 8.1 0 2.4 1.1 4.5 2.9 6l-.8 3.3 3.5-1.7c1 .3 2.1.5 3.2.5 4.9 0 8.8-3.6 8.8-8.1S16.9 3.2 12 3.2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.6 9.6c.3 1.6 2.2 3.7 4.1 4.3.6.2 1.2-.2 1.5-.7l.3-.5-1.6-.9-.6.6c-.8-.3-1.6-1.1-1.9-1.9l.6-.6-.9-1.6-.5.3c-.6.3-1 .8-1 1z" fill="currentColor"/></svg><span class="wa-label">Chat on WhatsApp</span>';
+    document.body.appendChild(a);
   }
 
   function category(works, isExample){
@@ -580,6 +625,7 @@
     const isExample = !real.length;
     const works = isExample ? PLACEHOLDERS : real;
     if (PAGE === 'home'){ home(works, isExample); reviews(s); }
+    floatingWhatsApp();
     if (PAGE === 'category') category(works, isExample);
     if (PAGE === 'artwork') artwork(works, s);
     if (PAGE === 'about') about(s);
