@@ -359,3 +359,22 @@ a.rv:hover .rv-foot{color:var(--fg)}
 .wa-float:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
 @media (max-width:520px){.wa-float{height:52px;min-width:52px;padding:0 13px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}}
 @media print{.wa-float{display:none}}
+
+/* ---------- phone: shorter, tighter home page ---------- */
+@media (max-width:720px){
+  /* the two art-form sections: heading + a 3-line intro, no detail list */
+  .chapter .chapter-copy{gap:var(--s2)}
+  .chapter .chapter-copy h2{font-size:clamp(1.9rem,8vw,2.4rem)}
+  .chapter .chapter-copy > p:not(.eyebrow){display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.98rem}
+  .chapter .spec{display:none}
+  /* reviews: only the first two */
+  #rv-grid > .rv:nth-child(n+3){display:none}
+  /* commission steps: four boxes, two by two */
+  .process{padding-block:var(--s5)}
+  .process h2{margin-bottom:var(--s3)}
+  .steps{grid-template-columns:1fr 1fr;gap:.6rem}
+  .steps li{border:1px solid var(--line);background:var(--surface);padding:var(--s2);gap:.35rem}
+  .steps li::before{font-size:1.25rem}
+  .steps h3{font-size:.78rem;letter-spacing:.08em}
+  .steps p{font-size:.85rem;line-height:1.5}
+}
