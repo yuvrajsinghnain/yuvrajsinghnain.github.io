@@ -322,6 +322,43 @@ def build():
         {'@type': 'WebSite', '@id': base + '#website', 'url': base, 'name': NAME, 'inLanguage': 'en-IN',
          'publisher': {'@id': base + '#artist'}},
         person(base, site)]})
+    # Google reviews, written into the page so they can be read without JavaScript
+    revs = [r for r in site.get('reviews') or [] if isinstance(r, dict)
+            and str(r.get('text') or '').strip() and str(r.get('name') or '').strip()]
+    rsec = soup.select_one('#reviews')
+    if rsec is not None and revs:
+        if rsec.has_attr('hidden'):
+            del rsec['hidden']
+        def rating(r):
+            try:
+                return min(5, max(1, round(float(r.get('rating') or 5))))
+            except (TypeError, ValueError):
+                return 5
+        stars = lambda k: '★' * k + '☆' * (5 - k)
+        g = soup.select_one('#rv-grid'); g.clear()
+        for r in revs:
+            f = soup.new_tag('figure', attrs={'class': 'rv'})
+            st = soup.new_tag('p', attrs={'class': 'rv-stars', 'aria-label': f'{rating(r)} out of 5 stars'}); st.string = stars(rating(r))
+            q = soup.new_tag('blockquote'); q.string = str(r['text']).strip()
+            c = soup.new_tag('figcaption')
+            n = soup.new_tag('span', attrs={'class': 'rv-name'}); n.string = str(r['name']).strip(); c.append(n)
+            if str(r.get('date') or '').strip():
+                d = soup.new_tag('span', attrs={'class': 'rv-date'}); d.string = str(r['date']).strip(); c.append(d)
+            f.append(st); f.append(q); f.append(c); g.append(f)
+        avg = sum(rating(r) for r in revs) / len(revs)
+        sc = soup.select_one('#rv-score'); sc.clear()
+        big = soup.new_tag('span', attrs={'class': 'rv-avg'}); big.string = f'{avg:.1f}'
+        side = soup.new_tag('span', attrs={'class': 'rv-side'})
+        s1 = soup.new_tag('span', attrs={'class': 'rv-stars'}); s1.string = stars(round(avg))
+        s2 = soup.new_tag('span', attrs={'class': 'eyebrow'}); s2.string = f"{len(revs)} review{'s' if len(revs) != 1 else ''} on Google"
+        side.append(s1); side.append(s2); sc.append(big); sc.append(side)
+        url = str(site.get('google_reviews_url') or '').strip()
+        link = soup.select_one('#rv-link')
+        if link is not None and url.startswith('http'):
+            link['href'] = url
+            if link.has_attr('hidden'):
+                del link['hidden']
+
     write('index.html', soup); pages.append(('', '1.0'))
 
     # ---- category pages
