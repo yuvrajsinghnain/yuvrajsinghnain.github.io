@@ -322,7 +322,7 @@ def build():
         {'@type': 'WebSite', '@id': base + '#website', 'url': base, 'name': NAME, 'inLanguage': 'en-IN',
          'publisher': {'@id': base + '#artist'}},
         person(base, site)]})
-    # Google reviews, written into the page so they can be read without JavaScript
+    # Google reviews, written into the page so they can be read without JavaScript (same layout as site.js)
     revs = [r for r in site.get('reviews') or [] if isinstance(r, dict)
             and str(r.get('text') or '').strip() and str(r.get('name') or '').strip()]
     rsec = soup.select_one('#reviews')
@@ -335,29 +335,61 @@ def build():
             except (TypeError, ValueError):
                 return 5
         stars = lambda k: '★' * k + '☆' * (5 - k)
+        colors = ['#5C6BC0', '#00897B', '#8D6E63', '#C2185B', '#6D4C41', '#3949AB', '#00796B', '#7B1FA2', '#AD1457', '#455A64']
+        url = str(site.get('google_reviews_url') or '').strip()
+        url = url if url.startswith('http') else ''
         g = soup.select_one('#rv-grid'); g.clear()
         for r in revs:
-            f = soup.new_tag('figure', attrs={'class': 'rv'})
-            st = soup.new_tag('p', attrs={'class': 'rv-stars', 'aria-label': f'{rating(r)} out of 5 stars'}); st.string = stars(rating(r))
-            q = soup.new_tag('blockquote'); q.string = str(r['text']).strip()
-            c = soup.new_tag('figcaption')
-            n = soup.new_tag('span', attrs={'class': 'rv-name'}); n.string = str(r['name']).strip(); c.append(n)
+            name = str(r['name']).strip()
+            own = str(r.get('link') or '').strip()
+            href = own if own.startswith('http') else url
+            rvc = soup.new_tag('a' if href else 'div', attrs={'class': 'rv'})
+            if href:
+                rvc['href'] = href; rvc['target'] = '_blank'; rvc['rel'] = 'noopener'
+                rvc['aria-label'] = f'Review by {name} on Google'
+            top = soup.new_tag('div', attrs={'class': 'rv-top'})
+            av = soup.new_tag('span', attrs={'class': 'rv-av'})
+            if src(r.get('avatar')):
+                av.append(soup.new_tag('img', src=src(r.get('avatar')), alt='', loading='lazy'))
+            else:
+                h = 0
+                for ch in name:
+                    h = (h * 31 + ord(ch)) & 0xFFFFFFFF
+                av['style'] = f'background:{colors[h % len(colors)]}'
+                av.string = name[0].upper()
+            who = soup.new_tag('span', attrs={'class': 'rv-who'})
+            n = soup.new_tag('span', attrs={'class': 'rv-name'}); n.string = name
+            meta = soup.new_tag('span', attrs={'class': 'rv-meta'})
+            st = soup.new_tag('span', attrs={'class': 'rv-stars', 'aria-label': f'{rating(r)} out of 5 stars'}); st.string = stars(rating(r))
+            meta.append(st)
             if str(r.get('date') or '').strip():
-                d = soup.new_tag('span', attrs={'class': 'rv-date'}); d.string = str(r['date']).strip(); c.append(d)
-            f.append(st); f.append(q); f.append(c); g.append(f)
+                d = soup.new_tag('span', attrs={'class': 'rv-date'}); d.string = str(r['date']).strip(); meta.append(d)
+            who.append(n); who.append(meta); top.append(av); top.append(who); rvc.append(top)
+            q = soup.new_tag('p', attrs={'class': 'rv-text'}); q.string = str(r['text']).strip(); rvc.append(q)
+            photos = r.get('photos') or []
+            photos = [src(p) for p in (photos if isinstance(photos, list) else [photos]) if src(p)]
+            if photos:
+                ph = soup.new_tag('div', attrs={'class': 'rv-photos'})
+                for k, p in enumerate(photos[:3]):
+                    f = soup.new_tag('span', attrs={'class': 'rv-ph'})
+                    f.append(soup.new_tag('img', src=p, alt=f"Photo from {name}'s review", loading='lazy'))
+                    if k == 2 and len(photos) > 3:
+                        m = soup.new_tag('span', attrs={'class': 'rv-more'}); m.string = f'+{len(photos) - 3}'; f.append(m)
+                    ph.append(f)
+                rvc.append(ph)
+            foot = BeautifulSoup('<span class="rv-foot"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 9.9 5.4l4.3.6-3.1 3 .7 4.3L8 11.3l-3.8 2 .7-4.3-3.1-3 4.3-.6z" fill="currentColor"/></svg><span>'
+                                 + ('Posted on Google ↗' if href else 'Posted on Google') + '</span></span>', 'html.parser')
+            rvc.append(foot); g.append(rvc)
         avg = sum(rating(r) for r in revs) / len(revs)
         sc = soup.select_one('#rv-score'); sc.clear()
-        big = soup.new_tag('span', attrs={'class': 'rv-avg'}); big.string = f'{avg:.1f}'
-        side = soup.new_tag('span', attrs={'class': 'rv-side'})
-        s1 = soup.new_tag('span', attrs={'class': 'rv-stars'}); s1.string = stars(round(avg))
-        s2 = soup.new_tag('span', attrs={'class': 'eyebrow'}); s2.string = f"{len(revs)} review{'s' if len(revs) != 1 else ''} on Google"
-        side.append(s1); side.append(s2); sc.append(big); sc.append(side)
-        url = str(site.get('google_reviews_url') or '').strip()
-        link = soup.select_one('#rv-link')
-        if link is not None and url.startswith('http'):
-            link['href'] = url
-            if link.has_attr('hidden'):
-                del link['hidden']
+        sc.append(BeautifulSoup(f'<span class="rv-label">Google rating</span><span class="rv-row"><span class="rv-avg">{avg:.1f}</span>'
+                                f'<span class="rv-stars lg">{stars(round(avg))}</span><span class="rv-count">{len(revs)} review{"s" if len(revs) != 1 else ""}</span></span>', 'html.parser'))
+        for el_id, link in (('rv-link', url), ('rv-write', str(site.get('google_write_review_url') or '').strip())):
+            el = soup.select_one('#' + el_id)
+            if el is not None and link.startswith('http'):
+                el['href'] = link
+                if el.has_attr('hidden'):
+                    del el['hidden']
 
     write('index.html', soup); pages.append(('', '1.0'))
 
