@@ -180,7 +180,10 @@ content:
         label: Google Search Console verification code (paste the code or the whole meta tag)
         type: string
       - name: google_reviews_url
-        label: Google reviews link (your Business Profile link, for the "Read all reviews on Google" button)
+        label: Google reviews link (your Business Profile link; every review card opens it)
+        type: string
+      - name: google_write_review_url
+        label: Google "write a review" link (from your Business Profile > Ask for reviews)
         type: string
       - name: reviews
         label: Google reviews (copy each one word for word from your Google profile)
@@ -190,6 +193,9 @@ content:
           - name: name
             label: Reviewer name (as shown on Google)
             type: string
+          - name: avatar
+            label: Reviewer profile photo (optional; leave empty to show their initial)
+            type: image
           - name: rating
             label: Stars (1 to 5)
             type: number
@@ -198,4 +204,13 @@ content:
             type: text
           - name: date
             label: Month and year (e.g. October 2026)
+            type: string
+          - name: photos
+            label: Photos the reviewer added on Google (optional)
+            type: image
+            options:
+              multiple:
+                max: 6
+          - name: link
+            label: Link to this exact review (optional; otherwise the card opens your Google profile)
             type: string
