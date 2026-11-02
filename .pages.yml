@@ -179,3 +179,23 @@ content:
       - name: google_verification
         label: Google Search Console verification code (paste the code or the whole meta tag)
         type: string
+      - name: google_reviews_url
+        label: Google reviews link (your Business Profile link, for the "Read all reviews on Google" button)
+        type: string
+      - name: reviews
+        label: Google reviews (copy each one word for word from your Google profile)
+        type: object
+        list: true
+        fields:
+          - name: name
+            label: Reviewer name (as shown on Google)
+            type: string
+          - name: rating
+            label: Stars (1 to 5)
+            type: number
+          - name: text
+            label: Review text (exactly as written on Google)
+            type: text
+          - name: date
+            label: Month and year (e.g. October 2026)
+            type: string
