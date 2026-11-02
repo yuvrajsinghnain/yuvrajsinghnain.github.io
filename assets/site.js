@@ -300,6 +300,35 @@
     $('#empty-note').hidden = !isExample;
   }
 
+  /* Google reviews, copied word for word into Site settings. The section stays hidden until there is one. */
+  function reviews(s){
+    const sec = $('#reviews'); if (!sec) return;
+    const list = (s.reviews || []).filter(r => r && (r.text || '').trim() && (r.name || '').trim());
+    sec.hidden = !list.length; if (!list.length) return;
+    const stars = n => { const k = Math.max(0, Math.min(5, Math.round(+n || 5))); return '★★★★★'.slice(0, k) + '☆☆☆☆☆'.slice(0, 5 - k); };
+    const grid = $('#rv-grid'); grid.innerHTML = '';
+    list.forEach(r => {
+      const f = document.createElement('figure'); f.className = 'rv';
+      const st = document.createElement('p'); st.className = 'rv-stars'; st.textContent = stars(r.rating);
+      st.setAttribute('aria-label', (Math.round(+r.rating || 5)) + ' out of 5 stars');
+      const q = document.createElement('blockquote'); q.textContent = r.text.trim();
+      const c = document.createElement('figcaption');
+      const n = document.createElement('span'); n.className = 'rv-name'; n.textContent = r.name.trim();
+      c.appendChild(n);
+      if ((r.date || '').trim()){ const d = document.createElement('span'); d.className = 'rv-date'; d.textContent = r.date.trim(); c.appendChild(d); }
+      f.append(st, q, c); grid.appendChild(f);
+    });
+    const avg = list.reduce((t, r) => t + (Math.min(5, Math.max(1, +r.rating || 5))), 0) / list.length;
+    $('#rv-score').innerHTML = '';
+    const big = document.createElement('span'); big.className = 'rv-avg'; big.textContent = avg.toFixed(1);
+    const side = document.createElement('span'); side.className = 'rv-side';
+    const st = document.createElement('span'); st.className = 'rv-stars'; st.textContent = stars(avg);
+    const cnt = document.createElement('span'); cnt.className = 'eyebrow'; cnt.textContent = list.length + (list.length === 1 ? ' review' : ' reviews') + ' on Google';
+    side.append(st, cnt); $('#rv-score').append(big, side);
+    const url = (s.google_reviews_url || '').trim(), link = $('#rv-link');
+    if (/^https?:\/\//.test(url)){ link.href = url; link.hidden = false; } else link.hidden = true;
+  }
+
   function category(works, isExample){
     const cat = document.body.dataset.cat;
     const list = works.filter(w => w.category === cat);
@@ -550,7 +579,7 @@
     const real = normalizeWorks(list);
     const isExample = !real.length;
     const works = isExample ? PLACEHOLDERS : real;
-    if (PAGE === 'home') home(works, isExample);
+    if (PAGE === 'home'){ home(works, isExample); reviews(s); }
     if (PAGE === 'category') category(works, isExample);
     if (PAGE === 'artwork') artwork(works, s);
     if (PAGE === 'about') about(s);
