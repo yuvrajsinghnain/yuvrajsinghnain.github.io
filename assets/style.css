@@ -368,7 +368,6 @@ a.rv:hover .rv-foot{color:var(--fg)}
   .chapter .chapter-copy > p:not(.eyebrow){display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.98rem}
   .chapter .spec{display:none}
   /* reviews: only the first two */
-  #rv-grid > .rv:nth-child(n+3){display:none}
   /* commission steps: four boxes, two by two */
   .process{padding-block:var(--s5)}
   .process h2{margin-bottom:var(--s3)}
@@ -378,3 +377,19 @@ a.rv:hover .rv-foot{color:var(--fg)}
   .steps h3{font-size:.78rem;letter-spacing:.08em}
   .steps p{font-size:.85rem;line-height:1.5}
 }
+
+/* ---------- reviews: continuous horizontal flow ---------- */
+.rv-viewport{position:relative;overflow:hidden;padding-block:6px;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%)}
+.rv-grid.flow,.rv-grid.scroll{display:flex;gap:0;width:max-content;align-items:stretch}
+.rv-grid.flow > .rv,.rv-grid.scroll > .rv{flex:0 0 auto;width:min(360px,80vw);margin-right:var(--s3)}
+.rv-grid.flow{animation:rv-flow var(--rv-dur,30s) linear infinite}
+.rv-viewport:hover .rv-grid.flow,.rv-grid.flow.paused{animation-play-state:paused}
+@keyframes rv-flow{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+/* when motion is reduced (or only one review): a row you can scroll sideways */
+.rv-viewport:has(.rv-grid.scroll){overflow-x:auto;scroll-snap-type:x mandatory;-webkit-mask-image:none;mask-image:none;
+  padding-left:max(16px,env(safe-area-inset-left,0px))}
+.rv-grid.scroll > .rv{scroll-snap-align:start}
+@media (min-width:760px){.rv-viewport:has(.rv-grid.scroll){padding-left:max(40px,env(safe-area-inset-left,0px))}}
+@media (max-width:720px){.rv-grid.flow > .rv,.rv-grid.scroll > .rv{margin-right:var(--s2)}}

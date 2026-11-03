@@ -349,6 +349,19 @@
     const url = /^https?:\/\//.test((s.google_reviews_url || '').trim()) ? s.google_reviews_url.trim() : '';
     const grid = $('#rv-grid'); grid.innerHTML = '';
     list.forEach(r => grid.appendChild(rvCard(r, url)));
+    // Continuous horizontal flow: the cards are shown twice in a row and the strip slides left forever.
+    // It pauses while a visitor hovers or touches it. Switched off for visitors who ask for less motion.
+    if (list.length >= 2 && !reduce){
+      list.forEach(r => { const c = rvCard(r, url); c.setAttribute('aria-hidden', 'true'); c.tabIndex = -1; grid.appendChild(c); });
+      grid.classList.add('flow');
+      grid.style.setProperty('--rv-dur', Math.max(24, list.length * 9) + 's');
+      const vp = $('#rv-viewport');
+      const pause = on => grid.classList.toggle('paused', on);
+      vp.addEventListener('touchstart', () => pause(true), {passive:true});
+      vp.addEventListener('touchend', () => setTimeout(() => pause(false), 1500), {passive:true});
+      vp.addEventListener('focusin', () => pause(true));
+      vp.addEventListener('focusout', () => pause(false));
+    } else grid.classList.add('scroll');
     const avg = list.reduce((t, r) => t + rvRating(r), 0) / list.length;
     const sc = $('#rv-score'); sc.innerHTML = '';
     const lab = document.createElement('span'); lab.className = 'rv-label'; lab.textContent = 'Google rating';
