@@ -393,3 +393,9 @@ a.rv:hover .rv-foot{color:var(--fg)}
 .rv-grid.scroll > .rv{scroll-snap-align:start}
 @media (min-width:760px){.rv-viewport:has(.rv-grid.scroll){padding-left:max(40px,env(safe-area-inset-left,0px))}}
 @media (max-width:720px){.rv-grid.flow > .rv,.rv-grid.scroll > .rv{margin-right:var(--s2)}}
+
+/* review photos grow to fill the card's spare space, centred (short reviews get big photos) */
+.rv-photos{flex:1 1 0;min-height:72px;max-height:260px;justify-content:center;align-items:center}
+.rv-ph{width:auto;height:100%;aspect-ratio:1/1;max-width:calc((100% - 1rem) / 3)}
+.rv-photos:has(.rv-ph:only-child) .rv-ph{max-width:100%}
+.rv-photos:has(.rv-ph:nth-child(2):last-child) .rv-ph{max-width:calc((100% - .5rem) / 2)}
