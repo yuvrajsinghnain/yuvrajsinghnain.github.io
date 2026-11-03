@@ -60,6 +60,25 @@
       "photos": [
         "/images/review-photo-sakha.jpg"
       ]
+    },
+    {
+      "name": "Yamit Agarwal",
+      "avatar": "/images/y.png",
+      "rating": 5,
+      "text": "Wonderful Person! Exceptional Art & Skills.\nThumbs up for the artist!",
+      "date": "November 2026",
+      "photos": [
+        "/images/om.webp"
+      ]
+    },
+    {
+      "name": "Yash Sharma",
+      "rating": 5,
+      "text": "Very nice Art\nVery Talented artist",
+      "date": "November 2026",
+      "photos": [
+        "/images/unnamed.webp"
+      ]
     }
   ]
 }
