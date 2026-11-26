@@ -399,3 +399,9 @@ a.rv:hover .rv-foot{color:var(--fg)}
 .rv-ph{width:auto;height:100%;aspect-ratio:1/1;max-width:calc((100% - 1rem) / 3)}
 .rv-photos:has(.rv-ph:only-child) .rv-ph{max-width:100%}
 .rv-photos:has(.rv-ph:nth-child(2):last-child) .rv-ph{max-width:calc((100% - .5rem) / 2)}
+
+/* phone menu: never wider than the screen (scrolls sideways inside itself if it ever has to) */
+@media (max-width:820px){
+  .subnav .wrap{overflow-x:auto;scrollbar-width:none}
+  .subnav .wrap::-webkit-scrollbar{display:none}
+}

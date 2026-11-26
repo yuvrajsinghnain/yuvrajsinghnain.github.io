@@ -21,6 +21,9 @@
     thread_heading:"Faces that appear from thousands of lines.",
     thread_text:"Hundreds of nails are set into a board, then thread is wound from nail to nail, line over line, until a likeness emerges. Up close it is pure geometry; step back and a person looks out at you.",
     thread_image:"",
+    colour_heading:"Portraits and patterns in living colour.",
+    colour_text:"The same nails and the same patience, now with coloured thread. Layer over layer, colours cross and blend on the board until an image glows in full colour.",
+    colour_image:"", colour_video:"",
     contact_heading_1:"Have something", contact_heading_2:"made for you.",
     contact_text:"Tell me what you have in mind: a portrait of someone you love, a name carved in graphite, a gift no one else will have.",
     email:"", whatsapp:"", instagram:"",
@@ -31,8 +34,10 @@
   };
   const CAT = {
     thread:{label:'Thread portrait', plural:'Thread portraits', page:'thread.html', medium:'Thread and nails on board'},
+    colour:{label:'Colour string art', plural:'Colour string art', page:'colour.html', medium:'Coloured thread and nails on board'},
     pencil:{label:'Microsculpture', plural:'Microsculptures', page:'microsculpture.html', medium:'Pencil graphite, carved by hand'}
   };
+  const NUMERAL = {thread:'I', colour:'II', pencil:'III'};
 
   const getJSON = async (path, fallback) => {
     try { const r = await fetch(path, {cache:'no-cache'}); if (!r.ok) throw 0; return await r.json(); }
@@ -84,20 +89,22 @@
     else { ctx.lineWidth = cw*0.22; ctx.beginPath(); for (let t=0;t<=1;t+=0.01){ const y = s*0.55 - t*s*1.3; const x = Math.sin(t*Math.PI*5)*cw*0.5; t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); } ctx.stroke(); ctx.beginPath(); ctx.arc(0,-s*0.8,cw*0.22,0,Math.PI*2); ctx.fill(); }
     ctx.restore();
   }
-  function thread(ctx, w, h, v){
+  function thread(ctx, w, h, v, colour){
     ctx.fillStyle = '#FBFAF7'; ctx.fillRect(0,0,w,h);
     const pad = w*0.1;
     ctx.strokeStyle = 'rgba(17,18,20,0.12)'; ctx.lineWidth = 1; ctx.strokeRect(pad*0.5,pad*0.5,w-pad,h-pad);
     const cx = w/2, cy = h/2, R = Math.min(w,h)/2 - pad, N = 180, k = [2,3,5,7.04,11,1.5][v%6];
     const pts = Array.from({length:N}, (_,i) => { const a = i/N*Math.PI*2 - Math.PI/2; return [cx+R*Math.cos(a), cy+R*Math.sin(a)]; });
     ctx.lineWidth = Math.max(.3, w/800); ctx.strokeStyle = 'rgba(17,18,20,0.55)';
-    for (let i=0;i<N;i++){ const j = Math.floor(i*k)%N; ctx.beginPath(); ctx.moveTo(pts[i][0],pts[i][1]); ctx.lineTo(pts[j][0],pts[j][1]); ctx.stroke(); }
+    const hues = ['rgba(196,48,60,.6)','rgba(232,140,30,.6)','rgba(34,120,180,.6)','rgba(30,140,100,.6)','rgba(120,60,160,.6)'];
+    for (let i=0;i<N;i++){ const j = Math.floor(i*k)%N; if (colour) ctx.strokeStyle = hues[Math.floor(i/N*hues.length)]; ctx.beginPath(); ctx.moveTo(pts[i][0],pts[i][1]); ctx.lineTo(pts[j][0],pts[j][1]); ctx.stroke(); }
     ctx.fillStyle = '#5c4a2c';
     pts.forEach(([x,y]) => { ctx.beginPath(); ctx.arc(x,y,Math.max(.6,w/700),0,Math.PI*2); ctx.fill(); });
   }
   function paint(cv){
     const {ctx,w,h} = fit(cv, cv.dataset.ratio ? +cv.dataset.ratio : 0);
-    (cv.dataset.kind==='pencil'?pencil:thread)(ctx,w,h,+cv.dataset.v||0);
+    if (cv.dataset.kind === 'pencil') pencil(ctx,w,h,+cv.dataset.v||0);
+    else thread(ctx,w,h,+cv.dataset.v||0, cv.dataset.kind === 'colour');
   }
   function drawing(kind, v, ratio){
     const cv = document.createElement('canvas');
@@ -157,7 +164,7 @@
       const photos = [w.image, ...(Array.isArray(w.gallery) ? w.gallery : (w.gallery ? [w.gallery] : []))]
         .flat().map(src).filter(Boolean);
       if (!photos.length) return null;
-      const category = w.category === 'pencil' ? 'pencil' : 'thread';
+      const category = CAT[w.category] ? w.category : 'thread';
       let slug = slugify(w.title); if (used[slug]) slug += '-' + (++used[slug]); else used[slug] = 1;
       return {...w, category, photos, slug, caption: w.details || ''};
     }).filter(Boolean);
@@ -195,7 +202,7 @@
       if (!src(s.hero_video)){ hero.classList.add('no-side'); cancelAnimationFrame(loomTimer); const lw = $('#loom-wrap'); if (lw) lw.hidden = true; }
     }
     // looping videos take priority; the photo (if any) is used as the still frame while the video loads
-    [['#loom-wrap', s.hero_video, ''], ['#micro-plate', s.micro_video, s.micro_image], ['#thread-plate', s.thread_video, s.thread_image]].forEach(([sel, vid, poster]) => {
+    [['#loom-wrap', s.hero_video, ''], ['#micro-plate', s.micro_video, s.micro_image], ['#thread-plate', s.thread_video, s.thread_image], ['#colour-plate', s.colour_video, s.colour_image]].forEach(([sel, vid, poster]) => {
       const fig = $(sel); if (!fig || !src(vid) || fig.classList.contains('has-video')) return;
       fig.querySelectorAll('canvas,img').forEach(n => n.remove());
       if (sel === '#loom-wrap') cancelAnimationFrame(loomTimer);
@@ -213,7 +220,7 @@
         } else tryPlay();
       }
     });
-    [['#micro-plate', s.micro_image, 'Microsculpture by Yuvraj Singh Nain'], ['#thread-plate', s.thread_image, 'Thread portrait by Yuvraj Singh Nain']].forEach(([sel, im, alt]) => {
+    [['#micro-plate', s.micro_image, 'Microsculpture by Yuvraj Singh Nain'], ['#thread-plate', s.thread_image, 'Thread portrait by Yuvraj Singh Nain'], ['#colour-plate', s.colour_image, 'Colour string art by Yuvraj Singh Nain']].forEach(([sel, im, alt]) => {
       const fig = $(sel); if (!fig || !im || fig.classList.contains('has-photo')) return;
       const img = new Image(); img.src = src(im); img.alt = alt; img.decoding = 'async';
       const old = fig.querySelector('canvas'); if (old) old.replaceWith(img);
@@ -285,15 +292,17 @@
     const grid = $('#grid'); if (!grid) return;
     // Selected works: pieces with a position number, in that order (1 first); ticked pieces without a number follow.
     const pos = w => { const v = parseFloat(w.featured_position); return isFinite(v) && v > 0 ? v : null; };
+    // The home page shows string art only (thread portraits and colour string art); microsculptures live on their own page.
+    works = works.filter(w => w.category !== 'pencil');
     const picked = works
       .filter(w => pos(w) !== null || w.featured === true || w.featured === 'true')
       .map((w, i) => ({w, k: pos(w) ?? 1e6 + i}))
       .sort((a, b) => a.k - b.k).map(x => x.w);
     const shown = picked.length ? picked : works.slice(0, 8);
     fillGrid(grid, shown);
-    // Phones show 4: the first 2 thread portraits and first 2 microsculptures (in your order),
+    // Phones show 4: the first 2 thread portraits and first 2 colour pieces (in your order),
     // topped up from the rest if one type has fewer than 2.
-    const keep = new Set(), per = {thread:0, pencil:0};
+    const keep = new Set(), per = {thread:0, colour:0};
     shown.forEach((w, i) => { if (per[w.category] < 2){ per[w.category]++; keep.add(i); } });
     shown.forEach((w, i) => { if (keep.size < 4) keep.add(i); });
     [...grid.children].forEach((el, i) => el.classList.toggle('m-hide', !keep.has(i)));
@@ -427,7 +436,7 @@
               <div class="thumbs" id="thumbs" role="group" aria-label="Photos of this artwork"></div>
             </div>
             <div class="art-info">
-              <p class="eyebrow"><b>${w.category === 'thread' ? 'I' : 'II'}</b> &nbsp;${c.label}</p>
+              <p class="eyebrow"><b>${NUMERAL[w.category] || 'I'}</b> &nbsp;${c.label}</p>
               <h1 id="a-title"></h1>
               <p class="caption" id="a-caption"></p>
               <div class="buy" id="a-buy"></div>
