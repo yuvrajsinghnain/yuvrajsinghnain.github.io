@@ -21,7 +21,9 @@ content:
         options:
           values:
             - name: thread
-              label: Thread portrait
+              label: Thread portrait (black & white)
+            - name: colour
+              label: Colour string art
             - name: pencil
               label: Microsculpture (pencil tip)
       - name: price
@@ -107,16 +109,16 @@ content:
         type: string
         list: true
       - name: micro_heading
-        label: Microsculpture section heading
+        label: Microsculpture page, heading (not shown on home page)
         type: string
       - name: micro_text
-        label: Microsculpture section text
+        label: Microsculpture page, intro text
         type: text
       - name: micro_image
-        label: Microsculpture section photo
+        label: Microsculpture section photo (no longer used on home page)
         type: image
       - name: micro_video
-        label: Microsculpture section video (MP4, loops)
+        label: Microsculpture section video (no longer used on home page)
         type: file
         options:
           extensions: [mp4, webm, mov]
@@ -131,6 +133,20 @@ content:
         type: image
       - name: thread_video
         label: Thread portrait section video (MP4, loops)
+        type: file
+        options:
+          extensions: [mp4, webm, mov]
+      - name: colour_heading
+        label: Colour string art section heading
+        type: string
+      - name: colour_text
+        label: Colour string art section text (also the intro on the Colour string art page)
+        type: text
+      - name: colour_image
+        label: Colour string art section photo
+        type: image
+      - name: colour_video
+        label: Colour string art section video (MP4, loops)
         type: file
         options:
           extensions: [mp4, webm, mov]
