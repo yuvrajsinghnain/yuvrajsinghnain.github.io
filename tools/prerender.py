@@ -23,6 +23,8 @@ SKIP = {'.git', '.github', '_site', 'tools', 'node_modules'}
 CAT = {
     'thread': {'label': 'Thread portrait', 'plural': 'Thread portraits', 'page': 'thread.html',
                'medium': 'Thread and nails on board'},
+    'colour': {'label': 'Colour string art', 'plural': 'Colour string art', 'page': 'colour.html',
+               'medium': 'Coloured thread and nails on board'},
     'pencil': {'label': 'Microsculpture', 'plural': 'Microsculptures', 'page': 'microsculpture.html',
                'medium': 'Pencil graphite, carved by hand'},
 }
@@ -72,7 +74,7 @@ def normalize_works(lst):
         photos = [src(p) for p in [w.get('image'), *gal] if src(p)]
         if not photos:
             continue
-        cat = 'pencil' if w.get('category') == 'pencil' else 'thread'
+        cat = w.get('category') if w.get('category') in CAT else 'thread'
         slug = slugify(w.get('title'))
         if slug in used:
             used[slug] += 1
@@ -84,6 +86,7 @@ def normalize_works(lst):
 
 
 def featured(works):
+    works = [w for w in works if w['category'] != 'pencil']   # home page: string art only
     def pos(w):
         try:
             v = float(w.get('featured_position'))
@@ -227,10 +230,10 @@ def person(base, site):
     same = [u for u in [instagram_url(site)] if u]
     p = {
         '@type': 'Person', '@id': base + '#artist', 'name': NAME, 'url': base,
-        'jobTitle': 'Thread portrait artist and pencil tip microsculptor',
+        'jobTitle': 'Thread portrait and string art artist',
         'description': clip(site.get('intro') or '', 300),
         'address': {'@type': 'PostalAddress', 'addressLocality': 'New Delhi', 'addressCountry': 'IN'},
-        'knowsAbout': ['String art', 'Thread portraits', 'Microsculpture', 'Pencil tip carving', 'Pencil lead art'],
+        'knowsAbout': ['String art', 'Thread portraits', 'Colour string art', 'Nail and thread art', 'Microsculpture', 'Pencil tip carving'],
     }
     if same:
         p['sameAs'] = same
@@ -301,17 +304,17 @@ def build():
     soup = read('index.html')
     fill_shared(soup, site)
     url = set_meta(soup, base, 'index.html',
-                   f'{NAME} · Thread Portrait Artist & Pencil Tip Microsculptor, New Delhi',
-                   clip(f"{NAME} creates thread portraits (string art) and microsculptures carved on pencil tips. "
-                        f"New Delhi based, 3 India Book of Records entries. Custom commissions delivered worldwide."),
+                   f'{NAME} · Thread Portrait & String Art Artist, New Delhi',
+                   clip(f"{NAME} creates thread portraits and colour string art, faces and designs made from thread wound across "
+                        f"thousands of nails. New Delhi based, 3 India Book of Records entries. Commissions worldwide."),
                    hero_img or first_photo)
     grid = soup.select_one('#grid')
     if grid is not None and works:
         grid.clear()
         shown = featured(works)
-        keep, per = set(), {'thread': 0, 'pencil': 0}
+        keep, per = set(), {'thread': 0, 'colour': 0}
         for i, w in enumerate(shown):
-            if per[w['category']] < 2:
+            if per.get(w['category'], 2) < 2:
                 per[w['category']] += 1; keep.add(i)
         for i in range(len(shown)):
             if len(keep) < 4:
@@ -398,6 +401,9 @@ def build():
         ('thread', 'thread.html', f'Thread Portraits & String Art by {NAME} · Custom Commissions',
          f'Handmade thread portraits (string art) by {NAME}: faces formed from thread wound across hundreds of nails. '
          'Custom portraits from your photos, delivered across India and worldwide.'),
+        ('colour', 'colour.html', f'Colour String Art by {NAME} · Custom Commissions',
+         f'Colour string art by {NAME}: portraits and designs in coloured thread wound across hundreds of nails. '
+         'Custom pieces from your photos, delivered across India and worldwide.'),
         ('pencil', 'microsculpture.html', f'Pencil Tip Microsculptures by {NAME} · Pencil Lead Carving',
          f'Microsculptures hand-carved into pencil tips by {NAME}: names, symbols and tiny sculptures in graphite. '
          'Custom pencil carvings and personalised gifts, shipped worldwide.')]:
